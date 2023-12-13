@@ -11,5 +11,5 @@ public class OutBoxEvent
     public string AggregateType { get; set; }
     public string AggregateId { get; set; }
     public string Type { get; set; }
-    public string Payload { get; set; }
+    public byte[] Payload { get; set; }
 }

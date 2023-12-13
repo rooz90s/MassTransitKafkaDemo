@@ -87,11 +87,11 @@ namespace MassTransitKafkaDemo
                     //     // https://www.confluent.io/blog/multiple-event-types-in-the-same-kafka-topic/
                     //     var serializerConfig = new AvroSerializerConfig { SubjectNameStrategy = SubjectNameStrategy.Record, AutoRegisterSchemas = true, };
                     //
-                    //     var serializer = new MultipleTypeSerializer<ITaskEvent>(multipleTypeConfig, schemaRegistryClient, serializerConfig);
+                     // var serializer = new MultipleTypeSerializer<ITaskEvent>(multipleTypeConfig, schemaRegistryClient, serializerConfig);
                     //     // Note that all child serializers share the same AvroSerializerConfig - separate producers could
                     //     // be used for each logical set of message types (e.g. all messages produced to a certain topic)
                     //     // to support varying configuration if needed.
-                    //     producerConfig.SetKeySerializer(new AvroSerializer<string>(schemaRegistryClient).AsSyncOverAsync());
+                       //  producerConfig.SetKeySerializer(new AvroSerializer<string>(schemaRegistryClient).AsSyncOverAsync());
                     //     producerConfig.SetValueSerializer(serializer.AsSyncOverAsync());
                     // });
 
@@ -123,6 +123,7 @@ namespace MassTransitKafkaDemo
                             //tc.UseRawJsonSerializer();
 
                             tc.ConsumerMessageConfigured(new ConsumerMessageSpecification<TaskStartedConsumer, TaskStarted>());
+                            tc.ConsumerMessageConfigured(new ConsumerMessageSpecification<TaskRequestedConsumer, TaskRequested>());
                             tc.ConsumerMessageConfigured(new ConsumerMessageSpecification<TaskRequestedConsumer, TaskRequested>());
                             tc.ConfigureConsumer<TaskRequestedConsumer>(riderContext);
                             tc.ConfigureConsumer<TaskStartedConsumer>(riderContext);

@@ -2,6 +2,7 @@ using System;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Confluent.Kafka;
 using Confluent.SchemaRegistry;
 using Confluent.SchemaRegistry.Serdes;
 using MassTransit.KafkaIntegration;
@@ -57,27 +58,31 @@ namespace MassTransitKafkaDemo.Demo
 
             //var msg = new TaskRequested() { Id = Guid.NewGuid(), RequestedDate = DateTime.Now, RequestedBy = "test" };
 
-            var msg = new TaskCompleted() { Id = Guid.NewGuid() , CompletedDate = DateTime.Now};
+            while (true)
+            {
 
-            var msgjson = JsonSerializer.Serialize(msg);
-            // var multipleTypeConfig = new MultipleTypeConfigBuilder<ITaskEvent>()
-            //     .AddType<TaskRequested>(TaskRequested._SCHEMA)
-            //     .AddType<TaskStarted>(TaskStarted._SCHEMA)
-            //     .AddType<TaskCompleted>(TaskCompleted._SCHEMA)
-            //     .Build();
-            //
-            // var serializerConfig = new AvroSerializerConfig { SubjectNameStrategy = SubjectNameStrategy.Record, AutoRegisterSchemas = true, };
-            //
-            // var serializer = new MultipleTypeSerializer<ITaskEvent>(multipleTypeConfig, schemaClient, serializerConfig);
-            //
-            //
-            // var msggg = AvroConvert.Serialize(msg);
+                var msg = new TaskRequested() { Id = Guid.NewGuid(), RequestedDate = DateTime.Now , RequestedBy = "Dj Sourosh sg track"};
 
-            await dbctx.OutBox.AddAsync(
-                new OutBoxEvent() { Payload = msgjson, Type = nameof(TaskCompleted), AggregateType = "issuing", AggregateId = Guid.NewGuid().ToString() },
-                stoppingToken);
+                var multipleTypeConfig = new MultipleTypeConfigBuilder<ITaskEvent>()
+                    .AddType<TaskRequested>(TaskRequested._SCHEMA)
+                    .AddType<TaskStarted>(TaskStarted._SCHEMA)
+                    .AddType<TaskCompleted>(TaskCompleted._SCHEMA)
+                    .Build();
 
-            await dbctx.SaveChangesAsync(stoppingToken);
+                var serializerConfig = new AvroSerializerConfig { SubjectNameStrategy = SubjectNameStrategy.Record, AutoRegisterSchemas = true, };
+                var serializer = new MultipleTypeSerializer<ITaskEvent>(multipleTypeConfig, schemaClient, serializerConfig);
+
+                var msggg = await serializer.SerializeAsync(msg, new SerializationContext(MessageComponentType.Value, "issuing.events"));
+
+
+                await dbctx.OutBox.AddAsync(
+                    new OutBoxEvent() { Payload = msggg, Type = nameof(TaskRequested), AggregateType = "issuing", AggregateId = Guid.NewGuid().ToString() },
+                    stoppingToken);
+
+                await dbctx.SaveChangesAsync(stoppingToken);
+
+                await Task.Delay(5000, stoppingToken);
+            }
 
             // while (true)
             // {
