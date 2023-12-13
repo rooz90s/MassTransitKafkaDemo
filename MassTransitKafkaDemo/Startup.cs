@@ -29,12 +29,13 @@ using MassTransitKafkaDemo.Demo;
 using MassTransitKafkaDemo.exceptionHandlers;
 using MassTransitKafkaDemo.Infrastructure.AvroSerializers;
 using MassTransitKafkaDemo.Messages;
+using Microsoft.EntityFrameworkCore;
 
 namespace MassTransitKafkaDemo
 {
     public class Startup
     {
-        private const string TaskEventsTopic = "task-events";
+        private const string TaskEventsTopic = "issuing.events";
         private const string KafkaBroker = "172.22.3.58:9092";
         private const string SchemaRegistryUrl = "172.22.3.58:8081";
 
@@ -43,6 +44,12 @@ namespace MassTransitKafkaDemo
             var schemaRegistryConfig = new SchemaRegistryConfig { Url = SchemaRegistryUrl };
             var schemaRegistryClient = new CachedSchemaRegistryClient(schemaRegistryConfig);
             services.AddSingleton<ISchemaRegistryClient>(schemaRegistryClient);
+
+            services.AddDbContext<DBctx>(conf =>
+            {
+
+                conf.UseSqlServer("Data Source =172.22.3.58,14333; Initial Catalog = OutboxCDC ; user Id= sa; pwd=Password!; TrustServerCertificate=True");
+            });
 
             services.AddMassTransit(busConfig =>
             {
@@ -64,29 +71,29 @@ namespace MassTransitKafkaDemo
 
 
                     // Set up producers - events are produced by DemoProducer hosted service
-                    riderConfig.AddProducer<string, ITaskEvent>(TaskEventsTopic, (riderContext, producerConfig) =>
-                    {
-                        // Serializer configuration.
-
-                        // Important: Use either SubjectNameStrategy.Record or SubjectNameStrategy.TopicRecord.
-                        // SubjectNameStrategy.Topic (default) would result in the topic schema being set based on
-                        // the first message produced.
-                        //
-                        // Note that you can restrict the range of message types for a topic by setting up the
-                        // topic schema using schema references. This hasn't yet been covered in this demo - more
-                        // details available here:
-                        // https://docs.confluent.io/platform/current/schema-registry/serdes-develop/index.html#multiple-event-types-in-the-same-topic
-                        // https://docs.confluent.io/platform/current/schema-registry/serdes-develop/serdes-avro.html#multiple-event-types-same-topic-avro
-                        // https://www.confluent.io/blog/multiple-event-types-in-the-same-kafka-topic/
-                        var serializerConfig = new AvroSerializerConfig { SubjectNameStrategy = SubjectNameStrategy.Record, AutoRegisterSchemas = true, };
-
-                        var serializer = new MultipleTypeSerializer<ITaskEvent>(multipleTypeConfig, schemaRegistryClient, serializerConfig);
-                        // Note that all child serializers share the same AvroSerializerConfig - separate producers could
-                        // be used for each logical set of message types (e.g. all messages produced to a certain topic)
-                        // to support varying configuration if needed.
-                        producerConfig.SetKeySerializer(new AvroSerializer<string>(schemaRegistryClient).AsSyncOverAsync());
-                        producerConfig.SetValueSerializer(serializer.AsSyncOverAsync());
-                    });
+                    // riderConfig.AddProducer<string, ITaskEvent>(TaskEventsTopic, (riderContext, producerConfig) =>
+                    // {
+                    //     // Serializer configuration.
+                    //
+                    //     // Important: Use either SubjectNameStrategy.Record or SubjectNameStrategy.TopicRecord.
+                    //     // SubjectNameStrategy.Topic (default) would result in the topic schema being set based on
+                    //     // the first message produced.
+                    //     //
+                    //     // Note that you can restrict the range of message types for a topic by setting up the
+                    //     // topic schema using schema references. This hasn't yet been covered in this demo - more
+                    //     // details available here:
+                    //     // https://docs.confluent.io/platform/current/schema-registry/serdes-develop/index.html#multiple-event-types-in-the-same-topic
+                    //     // https://docs.confluent.io/platform/current/schema-registry/serdes-develop/serdes-avro.html#multiple-event-types-same-topic-avro
+                    //     // https://www.confluent.io/blog/multiple-event-types-in-the-same-kafka-topic/
+                    //     var serializerConfig = new AvroSerializerConfig { SubjectNameStrategy = SubjectNameStrategy.Record, AutoRegisterSchemas = true, };
+                    //
+                    //     var serializer = new MultipleTypeSerializer<ITaskEvent>(multipleTypeConfig, schemaRegistryClient, serializerConfig);
+                    //     // Note that all child serializers share the same AvroSerializerConfig - separate producers could
+                    //     // be used for each logical set of message types (e.g. all messages produced to a certain topic)
+                    //     // to support varying configuration if needed.
+                    //     producerConfig.SetKeySerializer(new AvroSerializer<string>(schemaRegistryClient).AsSyncOverAsync());
+                    //     producerConfig.SetValueSerializer(serializer.AsSyncOverAsync());
+                    // });
 
                     // Set up consumers and consuming
                     riderConfig.AddConsumersFromNamespaceContaining<TaskRequestedConsumer>();
@@ -112,6 +119,8 @@ namespace MassTransitKafkaDemo
                             tc.SetValueDeserializer(
                                 new MultipleTypeDeserializer<ITaskEvent>(multipleTypeConfig, schemaRegistryClient)
                                     .AsSyncOverAsync());
+
+                            //tc.UseRawJsonSerializer();
 
                             tc.ConsumerMessageConfigured(new ConsumerMessageSpecification<TaskStartedConsumer, TaskStarted>());
                             tc.ConsumerMessageConfigured(new ConsumerMessageSpecification<TaskRequestedConsumer, TaskRequested>());

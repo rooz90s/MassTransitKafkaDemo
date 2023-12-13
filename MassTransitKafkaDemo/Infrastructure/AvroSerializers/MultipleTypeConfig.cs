@@ -17,10 +17,10 @@ namespace MassTransitKafkaDemo.Infrastructure.AvroSerializers
         {
             _types = types;
         }
-        
+
         public IReaderWrapper CreateReader(Schema writerSchema)
         {
-            var type = _types.SingleOrDefault(x => x.Schema.Fullname == writerSchema.Fullname);
+            var type = _types.SingleOrDefault(x => x.Schema.Name == writerSchema.Fullname);
             if (type == null)
             {
                 throw new ArgumentException($"Unexpected type {writerSchema.Fullname}. Supported types need to be added to this {nameof(MultipleTypeConfig)} instance", nameof(writerSchema));
