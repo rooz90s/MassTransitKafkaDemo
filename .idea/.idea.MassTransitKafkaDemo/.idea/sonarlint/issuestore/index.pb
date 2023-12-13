@@ -1,0 +1,19 @@
+
+9
+	readme.md,2\7\275d783e298228506068436512433d343feb52aa
+g
+7MassTransitKafkaDemo/Consumers/TaskCompletedConsumer.cs,5\0\50fb83093d096c55069f87c1b0cb599c5e1ab7a9
+c
+3MassTransitKafkaDemo/Consumers/TaskEventConsumer.cs,4\f\4fdbd2c9c9e2a8e38b0671dbdaf76258a1700961
+Y
+)MassTransitKafkaDemo/Demo/DemoProducer.cs,c\a\ca241d76f84f3cb9097faa2d9cb0001db7fbb901
+e
+5MassTransitKafkaDemo/Consumers/TaskStartedConsumer.cs,f\4\f4f86a2b1eb39788209c7320e3d80fb0551ae1dd
+Å
+QMassTransitKafkaDemo/exceptionHandlers/ExampleMiddlewareConfiguratorExtensions.cs,4\d\4df72db0337195825413092d4c2ad5c565fac9c5
+O
+MassTransitKafkaDemo/Program.cs,6\5\650a2cd73fe83873b58be1ba5bf9b4d3a6106415
+g
+7MassTransitKafkaDemo/Consumers/TaskRequestedConsumer.cs,0\f\0f001cd736411251eb6423e033ceae73d3f8c8a4
+O
+MassTransitKafkaDemo/Startup.cs,3\9\398a1756e03c08aea494197128115f6d3d94a9a9
