@@ -5,6 +5,9 @@
 //    is regenerated
 // </auto-generated>
 // ------------------------------------------------------------------------------
+
+using SolTechnology.Avro;
+
 namespace MassTransitKafkaDemo.Messages
 {
 	using System;
@@ -12,13 +15,13 @@ namespace MassTransitKafkaDemo.Messages
 	using System.Text;
 	using Avro;
 	using Avro.Specific;
-	
+
 	/// <summary>
 	/// The event raised when a task is requested.
 	/// </summary>
 	public partial class TaskRequested : ISpecificRecord
 	{
-		public static Schema _SCHEMA = Avro.Schema.Parse(@"{""type"":""record"",""name"":""TaskRequested"",""namespace"":""MassTransitKafkaDemo.Messages"",""fields"":[{""name"":""Id"",""doc"":""The id of the task"",""type"":{""type"":""string"",""logicalType"":""uuid""}},{""name"":""RequestedDate"",""doc"":""The date when the task was requested"",""type"":{""type"":""long"",""logicalType"":""timestamp-millis""}},{""name"":""RequestedBy"",""doc"":""The name of the user that requested the task"",""type"":""string""}]}");
+		public static Schema _SCHEMA =  Avro.Schema.Parse(@"{""type"":""record"",""name"":""TaskRequested"",""namespace"":""MassTransitKafkaDemo.Messages"",""fields"":[{""name"":""Id"",""doc"":""The id of the task"",""type"":{""type"":""string"",""logicalType"":""uuid""}},{""name"":""RequestedDate"",""doc"":""The date when the task was requested"",""type"":{""type"":""long"",""logicalType"":""timestamp-millis""}},{""name"":""RequestedBy"",""doc"":""The name of the user that requested the task"",""type"":""string""}]}");
 		/// <summary>
 		/// The id of the task
 		/// </summary>

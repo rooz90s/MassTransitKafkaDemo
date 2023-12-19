@@ -2,6 +2,7 @@ using System;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Asa.FundBackoffice.Event.AvroRegistry;
 using Confluent.Kafka;
 using Confluent.SchemaRegistry;
 using Confluent.SchemaRegistry.Serdes;
@@ -13,6 +14,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using SolTechnology.Avro;
+using ZPersianDateTime;
 
 
 namespace MassTransitKafkaDemo.Demo
@@ -35,9 +37,10 @@ namespace MassTransitKafkaDemo.Demo
             {
                 using var scope = _serviceScopeFactory.CreateScope();
                 var producer = scope.ServiceProvider.GetService<ITopicProducer<string, ITaskEvent>>();
+                var serializer = scope.ServiceProvider.GetService<ISerializer>();
                 var Db = scope.ServiceProvider.GetRequiredService<DBctx>();
                 var schemaClient = scope.ServiceProvider.GetRequiredService<ISchemaRegistryClient>();
-                await Produce(producer, Db, schemaClient, stoppingToken);
+                await Produce(producer, Db, schemaClient,serializer, stoppingToken);
             }
             catch (OperationCanceledException)
             {
@@ -45,7 +48,7 @@ namespace MassTransitKafkaDemo.Demo
             }
         }
 
-        private async Task Produce(ITopicProducer<string, ITaskEvent> producer, DBctx dbctx, ISchemaRegistryClient schemaClient,
+        private async Task Produce(ITopicProducer<string, ITaskEvent> producer, DBctx dbctx, ISchemaRegistryClient schemaClient,ISerializer serializer,
             CancellationToken stoppingToken)
         {
             var random = new Random();
@@ -61,22 +64,15 @@ namespace MassTransitKafkaDemo.Demo
             while (true)
             {
 
-                var msg = new TaskRequested() { Id = Guid.NewGuid(), RequestedDate = DateTime.Now , RequestedBy = "Dj Sourosh sg track"};
+               //var msg = new TaskRequested() { Id = Guid.NewGuid(), RequestedDate = DateTime.Now , RequestedBy = "Dj Sourosh sg track"};
+               var msg = new TaskCompleted() { Id = Guid.NewGuid(), CompletedDate = DateTime.Now};
 
-                var multipleTypeConfig = new MultipleTypeConfigBuilder<ITaskEvent>()
-                    .AddType<TaskRequested>(TaskRequested._SCHEMA)
-                    .AddType<TaskStarted>(TaskStarted._SCHEMA)
-                    .AddType<TaskCompleted>(TaskCompleted._SCHEMA)
-                    .Build();
 
-                var serializerConfig = new AvroSerializerConfig { SubjectNameStrategy = SubjectNameStrategy.Record, AutoRegisterSchemas = true, };
-                var serializer = new MultipleTypeSerializer<ITaskEvent>(multipleTypeConfig, schemaClient, serializerConfig);
-
-                var msggg = await serializer.SerializeAsync(msg, new SerializationContext(MessageComponentType.Value, "issuing.events"));
+                var msggg = await serializer.ValueSerializerAsync(msg,  "issuing.events");
 
 
                 await dbctx.OutBox.AddAsync(
-                    new OutBoxEvent() { Payload = msggg, Type = nameof(TaskRequested), AggregateType = "issuing", AggregateId = Guid.NewGuid().ToString() },
+                    new OutBoxEvent() { Payload = msggg, Context = "issuing", AggregateId = Guid.NewGuid().ToString() },
                     stoppingToken);
 
                 await dbctx.SaveChangesAsync(stoppingToken);

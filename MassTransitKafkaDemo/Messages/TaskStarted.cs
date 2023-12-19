@@ -12,7 +12,7 @@ namespace MassTransitKafkaDemo.Messages
 	using System.Text;
 	using Avro;
 	using Avro.Specific;
-	
+
 	/// <summary>
 	/// The event raised when a task is started.
 	/// </summary>

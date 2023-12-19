@@ -5,8 +5,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Apache.Avro" Version="1.10.2" />
+    <PackageReference Include="Apache.Avro" Version="1.11.3" />
+    <PackageReference Include="Asa.FundBackoffice.Event.AvroRegistry" Version="0.0.3-alpha" />
+    <PackageReference Include="Avro.NET" Version="1.0.0" />
     <PackageReference Include="AvroConvert" Version="3.4.3" />
+    <PackageReference Include="Confluent.Kafka" Version="2.3.0" />
     <PackageReference Include="Confluent.SchemaRegistry" Version="1.7.0" />
     <PackageReference Include="Confluent.SchemaRegistry.Serdes.Avro" Version="1.7.0" />
     <PackageReference Include="Dapper" Version="2.1.24" />
@@ -20,7 +23,17 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="6.0.25" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.0" />
+    <PackageReference Include="ZPersianDateTime" Version="0.0.3" />
   </ItemGroup>
+
+
+  <ItemGroup>
+    <None Remove="TaskCompleted.V1.avsc" />
+    <Resource Include="TaskCompleted.V1.avsc" />
+  </ItemGroup>
+
+
 
 
 </Project>

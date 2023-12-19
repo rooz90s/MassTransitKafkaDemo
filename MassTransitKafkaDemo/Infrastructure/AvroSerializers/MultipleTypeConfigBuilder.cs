@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Avro;
 using Avro.Specific;
 using MassTransitKafkaDemo.Messages;
+using Schema = Avro.Schema;
 
 namespace MassTransitKafkaDemo.Infrastructure.AvroSerializers
 {
@@ -42,6 +42,8 @@ namespace MassTransitKafkaDemo.Infrastructure.AvroSerializers
             _types.Add(mapping);
             return this;
         }
+
+
 
         public MultipleTypeConfig Build() => new(_types.ToArray());
     }

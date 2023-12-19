@@ -1,4 +1,6 @@
 using System;
+using Asa.FundBackoffice.Event.Contract;
+
 
 namespace MassTransitKafkaDemo.Messages
 {
@@ -9,7 +11,7 @@ namespace MassTransitKafkaDemo.Messages
 
     // HACK - MassTransit doesn't like object value types so we need a custom
     // base type shared by our event types
-    public partial class TaskRequested : ITaskEvent { }
-    public partial class TaskStarted : ITaskEvent { }
-    public partial class TaskCompleted : ITaskEvent { }
+    public partial class TaskRequested : ITaskEvent , IIntegrationEvent { }
+    public partial class TaskStarted : ITaskEvent , IIntegrationEvent { }
+    public partial class TaskCompleted : ITaskEvent , IIntegrationEvent { }
 }

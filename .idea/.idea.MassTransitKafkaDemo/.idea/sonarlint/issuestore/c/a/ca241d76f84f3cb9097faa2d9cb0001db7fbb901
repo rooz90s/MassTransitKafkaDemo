@@ -1,2 +1,7 @@
 
-[csharpsquid:S2190%"2Add a way to break out of this method's recursion.( Å¯†ıÿÿÿÿ8ºÄóíÅ1
+[csharpsquid:S21902"2Add a way to break out of this method's recursion.(ŸÕ•”ûÿÿÿÿ8€¸ìÆ1
+\csharpsquid:S11722"3Remove this unused method parameter 'schemaClient'.(ŸÕ•”ûÿÿÿÿ8©æ¿—Æ1
+pcsharpsquid:S11722"GRemove this parameter 'producer', whose value is ignored in the method.(ŸÕ•”ûÿÿÿÿ8èçıèÇ1
+Gcsharpsquid:S125="Remove this commented out code.(å€£áşÿÿÿÿ8¥äë›Æ1
+Acsharpsquid:S125G"Remove this commented out code.(Š‚•b8ÊÁıèÇ1
+Bcsharpsquid:S125Y"Remove this commented out code.(Ú°à¬8­¤ì›Æ1

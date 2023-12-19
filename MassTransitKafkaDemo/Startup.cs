@@ -7,6 +7,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Asa.FundBackoffice.Event.AvroRegistry;
+using Asa.FundBackoffice.Event.Contract;
 using Confluent.Kafka;
 using Confluent.Kafka.SyncOverAsync;
 using Confluent.SchemaRegistry;
@@ -30,14 +32,16 @@ using MassTransitKafkaDemo.exceptionHandlers;
 using MassTransitKafkaDemo.Infrastructure.AvroSerializers;
 using MassTransitKafkaDemo.Messages;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 
 namespace MassTransitKafkaDemo
 {
     public class Startup
     {
         private const string TaskEventsTopic = "issuing.events";
-        private const string KafkaBroker = "172.22.3.58:9092";
-        private const string SchemaRegistryUrl = "172.22.3.58:8081";
+        private const string KafkaBroker = "broker:29092";
+        private const string SchemaRegistryUrl = "schema-registry:8081";
+
 
         public void ConfigureServices(IServiceCollection services)
         {
@@ -47,8 +51,29 @@ namespace MassTransitKafkaDemo
 
             services.AddDbContext<DBctx>(conf =>
             {
-
                 conf.UseSqlServer("Data Source =172.22.3.58,14333; Initial Catalog = OutboxCDC ; user Id= sa; pwd=Password!; TrustServerCertificate=True");
+            });
+
+            services.AddAsaSchemaRegistry(builder =>
+            {
+                builder.SetSchemaRegistry(config => config.Url = SchemaRegistryUrl)
+                    .AddProducerType(typeBuilder => typeBuilder
+                        .AddType<TaskRequested>()
+                        .AddType<TaskStarted>()
+                        .AddType<TaskCompleted>()
+                        .Build()
+                        .SetAvroSerializer(config =>
+                        {
+                            config.SubjectNameStrategy = SubjectNameStrategy.Record;
+                            config.AutoRegisterSchemas = true;
+                        })
+                    )
+                    .AddConsumeType(typeBuilder =>
+                        typeBuilder.AddType<TaskRequested>()
+                            .AddType<TaskStarted>()
+                            .AddType<TaskCompleted>()
+                            .Build()
+                    );
             });
 
             services.AddMassTransit(busConfig =>
@@ -60,15 +85,6 @@ namespace MassTransitKafkaDemo
                 });
                 busConfig.AddRider(riderConfig =>
                 {
-                    // Specify supported message types here. Support is restricted to types generated via avrogen.exe
-                    // tool. Being explicit makes this a lot simpler as we can use Avro Schema objects rather than messing
-                    // around with .NET Types / reflection.
-                    var multipleTypeConfig = new MultipleTypeConfigBuilder<ITaskEvent>()
-                        .AddType<TaskRequested>(TaskRequested._SCHEMA)
-                        .AddType<TaskStarted>(TaskStarted._SCHEMA)
-                        .AddType<TaskCompleted>(TaskCompleted._SCHEMA)
-                        .Build();
-
 
                     // Set up producers - events are produced by DemoProducer hosted service
                     // riderConfig.AddProducer<string, ITaskEvent>(TaskEventsTopic, (riderContext, producerConfig) =>
@@ -87,24 +103,25 @@ namespace MassTransitKafkaDemo
                     //     // https://www.confluent.io/blog/multiple-event-types-in-the-same-kafka-topic/
                     //     var serializerConfig = new AvroSerializerConfig { SubjectNameStrategy = SubjectNameStrategy.Record, AutoRegisterSchemas = true, };
                     //
-                     // var serializer = new MultipleTypeSerializer<ITaskEvent>(multipleTypeConfig, schemaRegistryClient, serializerConfig);
+                    // var serializer = new MultipleTypeSerializer<ITaskEvent>(multipleTypeConfig, schemaRegistryClient, serializerConfig);
                     //     // Note that all child serializers share the same AvroSerializerConfig - separate producers could
                     //     // be used for each logical set of message types (e.g. all messages produced to a certain topic)
                     //     // to support varying configuration if needed.
-                       //  producerConfig.SetKeySerializer(new AvroSerializer<string>(schemaRegistryClient).AsSyncOverAsync());
+                    //  producerConfig.SetKeySerializer(new AvroSerializer<string>(schemaRegistryClient).AsSyncOverAsync());
                     //     producerConfig.SetValueSerializer(serializer.AsSyncOverAsync());
                     // });
 
                     // Set up consumers and consuming
                     riderConfig.AddConsumersFromNamespaceContaining<TaskRequestedConsumer>();
+
                     riderConfig.UsingKafka((riderContext, kafkaConfig) =>
                     {
+                        var deserializer = riderContext.GetService<IDeserializer>();
                         kafkaConfig.Host(KafkaBroker);
 
                         var groupId = "g1"; //Guid.NewGuid().ToString(); // always start from beginning
-                        kafkaConfig.TopicEndpoint<string, ITaskEvent>(TaskEventsTopic, groupId, tc =>
+                        kafkaConfig.TopicEndpoint<string, IIntegrationEvent>(TaskEventsTopic, groupId, tc =>
                         {
-
                             // tc.UseKillSwitch(options =>
                             // {
                             //     options.SetActivationThreshold(3)
@@ -116,18 +133,17 @@ namespace MassTransitKafkaDemo
 
                             tc.AutoOffsetReset = AutoOffsetReset.Earliest;
                             tc.SetKeyDeserializer(new AvroDeserializer<string>(schemaRegistryClient, null).AsSyncOverAsync());
-                            tc.SetValueDeserializer(
-                                new MultipleTypeDeserializer<ITaskEvent>(multipleTypeConfig, schemaRegistryClient)
-                                    .AsSyncOverAsync());
+
+                            tc.SetValueDeserializer(deserializer.AsSyncOverAsync());
 
                             //tc.UseRawJsonSerializer();
 
                             tc.ConsumerMessageConfigured(new ConsumerMessageSpecification<TaskStartedConsumer, TaskStarted>());
                             tc.ConsumerMessageConfigured(new ConsumerMessageSpecification<TaskRequestedConsumer, TaskRequested>());
                             tc.ConsumerMessageConfigured(new ConsumerMessageSpecification<TaskRequestedConsumer, TaskRequested>());
+
                             tc.ConfigureConsumer<TaskRequestedConsumer>(riderContext);
                             tc.ConfigureConsumer<TaskStartedConsumer>(riderContext);
-
                         });
                     });
                 });
